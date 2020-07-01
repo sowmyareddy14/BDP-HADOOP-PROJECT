@@ -1,0 +1,47 @@
+3. Hive Use Case :
+
+Creating Hive Table :
+
+create table Zomato(Restaurant_ID INT, Restaurant_Name STRING, Country_Code SMALLINT, City STRING, Address ARRAY<STRING>, Locality ARRAY<STRING>, Locality_Verbose ARRAY<STRING>, Longitude FLOAT, Latitude FLOAT, Cuisines ARRAY<STRING>, AverageCost_2 INT, Currency STRING,Has_Tablebooking STRING,Has_Onlinedelivery STRING, Isdelivering_now STRING, Switchtoorder_menu STRING, Price_range TINYINT, Aggregate_rating FLOAT, Rating_color STRING, Rating_text STRING, Votes INT)row format delimited fields terminated by ‘,’ collection items terminated by '#' stored as textfile tblproperties ("skip.header.line.count"="1");
+
+Loading Data into the Hive Table :
+
+load data local inpath '/home/cloudera/Desktop/zomato.csv' into table Zomato;
+
+
+Queries :
+
+Query1:  restaurants which currency matches with india
+
+select Restaurant_ID,Restaurant_Name,Currency from Zomato where Currency like 'Indian%'
+
+Query2:  using count to get numbers of restaurants in each countrycode.
+
+select Country_Code, count(Country_Code) from Zomato group by Country_Code;
+
+Query3:  To get top 10 restaurants with online delivery and highest rating
+select Restaurant_ID,Restaurant_Name,Aggregate_rating from Zomato where Has_Onlinedelivery="Yes" order by Aggregate_rating desc limit 10;
+
+Query4:  Concatinate latitude and longitude for country code 166
+select Restaurant_Name,concat(Latitude,",",Longitude) as location from Zomato where Country_Code=166 limit 10;
+
+Query5:  resturants which offer more than 6 cuisines
+select  Restaurant_Name, size(Cuisines) as number of cuisines from Zomato where size(Cuisines)>6;
+
+Query6:  condition on cuisines array with american and italian
+select Restaurant_Name,AverageCost_2 from Zomato where array_contains(Cuisines,"American","Italian") limit 10;
+
+Query7:  average rating for each country
+select Country_Code,avg(Aggregate_rating) as Avg_country_rating from Zomato Cluster by Country_Code;
+
+Query8:  wordcount for rating text
+select word,count(1) as cnt from (select explode(Rating_text) as word from Zomato) group by word order by cnt;
+
+Query9:  top 2 restaurants with highest votes for each Excellent and very good rating text
+select Restaurant_ID,City from (select Restaurant_ID,City, votes from Zomato where Rating_text="Excellent" order by votes desc limit 2 UNION ALL select Restaurant_ID,City, votes from Zomato where Rating_text="Excellent" order by votes desc limit 2) as D;
+
+Query10:  Display all cities for country code 1
+select City from Zomato where Country_Code=1 sort by City;
+
+
+
